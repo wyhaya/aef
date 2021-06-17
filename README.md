@@ -43,4 +43,20 @@ By default you will enter your password in the terminal, if you don't want to en
 cat your.file | aef -p 123456 > your.aef
 ```
 
+## Example
+
+Used in conjunction with the `tar` command
+
+Encryption
+
+```bash
+tar -cvf - ./dir | aef > your.aef
+```
+
+Decryption
+
+```bash
+cat your.aef | aef -d | tar -xvf -
+```
+
 ---
