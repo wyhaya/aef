@@ -1,9 +1,5 @@
 
-# aef
-
-[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/wyhaya/aef/Build?style=flat-square)](https://github.com/wyhaya/aef/actions)
-[![Crates.io](https://img.shields.io/crates/v/aef.svg?style=flat-square)](https://crates.io/crates/aef)
-[![LICENSE](https://img.shields.io/crates/l/aef.svg?style=flat-square)](https://github.com/wyhaya/aef/blob/master/LICENSE)
+# aef [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/wyhaya/aef/Build?style=flat-square)](https://github.com/wyhaya/aef/actions) [![Crates.io](https://img.shields.io/crates/v/aef.svg?style=flat-square)](https://crates.io/crates/aef)
 
 Util for file encryption
 
