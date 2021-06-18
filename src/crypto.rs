@@ -1,25 +1,17 @@
+use crate::{ErrorKind, IoError, IoResult, ToIoResult};
 use aes_gcm::{
     aead::{Aead, NewAead},
     Aes256Gcm, Key, Nonce,
 };
 use rand::Rng;
 pub use scrypt::{scrypt, Params};
-use std::io::{Error as IoError, ErrorKind, Read, Result as IoResult, Write};
+use std::io::{Read, Write};
 
 const IDENTIFY: &[u8; 4] = b"\xffAEF";
 
-trait AesResult<T> {
-    fn io_rst(self, msg: &str) -> IoResult<T>;
-}
-
-impl<T, E> AesResult<T> for Result<T, E> {
-    fn io_rst(self, msg: &str) -> IoResult<T> {
-        match self {
-            Ok(data) => Ok(data),
-            Err(_) => Err(IoError::new(ErrorKind::InvalidData, msg)),
-        }
-    }
-}
+pub const SCRYPT_LOG_N: u8 = 15;
+pub const SCRYPT_R: u32 = 8;
+pub const SCRYPT_P: u32 = 1;
 
 pub fn rand_salt() -> [u8; 64] {
     let mut buf = [0; 64];
@@ -63,7 +55,7 @@ pub fn read_header<R: Read>(r: &mut R) -> IoResult<([u8; 64], Params)> {
         u32::from_be_bytes(r_buf),
         u32::from_be_bytes(p_buf),
     )
-    .io_rst("Error scrypt params")?;
+    .io_rst(ErrorKind::Other, "Error scrypt params")?;
 
     Ok((salt, params))
 }
@@ -90,10 +82,10 @@ impl Cipher {
         }
 
         let nonce = rand_nonce();
-        let encrypted = self
-            .aes
-            .encrypt(Nonce::from_slice(&nonce), data)
-            .io_rst("AES-256-GCM encryption/decryption failed")?;
+        let encrypted = self.aes.encrypt(Nonce::from_slice(&nonce), data).io_rst(
+            ErrorKind::InvalidData,
+            "AES-256-GCM encryption/decryption failed",
+        )?;
         // Chunk length
         let len = encrypted.len() as u16;
         w.write_all(&len.to_be_bytes())?;
@@ -121,7 +113,10 @@ impl Cipher {
         let data = self
             .aes
             .decrypt(Nonce::from_slice(&nonce), &encrypted[..])
-            .io_rst("AES-256-GCM encryption/decryption failed")?;
+            .io_rst(
+                ErrorKind::InvalidData,
+                "AES-256-GCM encryption/decryption failed",
+            )?;
         Ok(data)
     }
 }

@@ -7,7 +7,7 @@ Util for file encryption
 
 * Encryption with `AES-256-GCM`
 * Use `scrypt` to prevent brute force cracking
-* Using linux pipeline operations
+* Support for `pipeline` operations
 
 ## Install
 
@@ -24,19 +24,34 @@ cargo install aef
 Encryption
 
 ```bash
-cat your.file | aef > your.aef
+aef ./your.file ./your.aef
 ```
 
 Decryption
 
 ```bash
-cat your.aef | aef -d > your.file
+aef ./yout.aef ./your.file -d
 ```
 
 By default you will enter your password in the terminal, if you don't want to enter it manually you can use the `-p` option
 
 ```bash
-cat your.file | aef -p 123456 > your.aef
+aef ./your.file ./your.aef -p 123456
+```
+
+Pipeline operation
+
+> Use `-` instead of the `File Path`, aef will operate from `stdin/stdout`
+
+```bash
+# Read from `stdin` and output to `stdout`
+cat your.file | aef - - > your.aef
+
+# Read from `file` and output to `stdout`
+aef your.aef - -d | > your.file
+
+# Read from stdin and output to file
+cat your.file | aef - ./your.aef 
 ```
 
 ## Example
@@ -46,13 +61,13 @@ Used in conjunction with the `tar` command
 Encryption
 
 ```bash
-tar -cvf - ./dir | aef > your.aef
+tar -cf - ./dir | aef - ./your.aef
 ```
 
 Decryption
 
 ```bash
-cat your.aef | aef -d | tar -xvf -
+aef ./your.aef - -d | tar -xf -
 ```
 
 ---

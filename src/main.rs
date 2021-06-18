@@ -1,38 +1,17 @@
 mod cli;
 mod crypto;
+mod error;
 use crypto::{rand_salt, read_header, write_header, Cipher};
-use std::io::{stdin, stdout, BufReader, BufWriter, Read, Result as IoResult, Write};
-
-#[macro_export]
-macro_rules! exit {
-    ($($arg:tt)*) => {
-       {
-            eprintln!($($arg)*);
-            std::process::exit(1)
-       }
-    };
-}
-
-trait ThrowError<T> {
-    fn unwrap_exit(self) -> T;
-}
-
-impl<T> ThrowError<T> for IoResult<T> {
-    fn unwrap_exit(self) -> T {
-        match self {
-            Ok(data) => data,
-            Err(err) => exit!("Error: {:?}", err),
-        }
-    }
-}
+pub use error::*;
+use std::io::{BufReader, BufWriter, Read, Write};
 
 const BUG_SIZE: usize = 8 * 1024;
 
 fn main() {
-    let (password, params) = cli::parse();
+    let (password, params, input, output) = cli::parse();
 
-    let mut reader = BufReader::with_capacity(BUG_SIZE, stdin());
-    let mut writer = BufWriter::with_capacity(BUG_SIZE, stdout());
+    let mut reader = BufReader::with_capacity(BUG_SIZE, input);
+    let mut writer = BufWriter::with_capacity(BUG_SIZE, output);
 
     match params {
         Some(params) => {
@@ -49,7 +28,7 @@ fn main() {
                             break;
                         }
                     }
-                    Err(err) => exit!("Error: {:?}", err),
+                    Err(err) => exit!("{:?}", err),
                 }
             }
         }
@@ -66,7 +45,7 @@ fn main() {
                             writer.write_all(&data).unwrap_exit();
                         }
                     }
-                    Err(err) => exit!("Error: {:?}", err),
+                    Err(err) => exit!("{:?}", err),
                 }
             }
         }

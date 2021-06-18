@@ -1,15 +1,17 @@
-use crate::crypto::Params;
-use crate::exit;
+use crate::{
+    crypto::{Params, SCRYPT_LOG_N, SCRYPT_P, SCRYPT_R},
+    exit, ThrowError,
+};
 use clap::{crate_name, crate_version, App, Arg};
+use std::io::{stdin, stdout, Read, Write};
+use std::path::Path;
+use std::{fs::File, str::FromStr};
 
-const SCRYPT_LOG_N: u8 = 15;
-const SCRYPT_R: u32 = 8;
-const SCRYPT_P: u32 = 1;
-
-pub fn parse() -> (String, Option<Params>) {
+pub fn parse() -> (String, Option<Params>, Box<dyn Read>, Box<dyn Write>) {
     let app = App::new(crate_name!())
         .version(crate_version!())
-        .usage(format!("<STDOUT> | {} > <STDOUT>", crate_name!()).as_str())
+        .arg(Arg::with_name("INPUT").required(true).help("<PATH> | -"))
+        .arg(Arg::with_name("OUTPUT").required(true).help("<PATH> | -"))
         .arg(
             Arg::with_name("decrypt")
                 .short("d")
@@ -32,36 +34,48 @@ pub fn parse() -> (String, Option<Params>) {
         )
         .get_matches();
 
-    let password = || match app.value_of("password") {
-        Some(s) => s.to_string(),
-        None => rpassword::read_password_from_tty(Some("Password: "))
-            .unwrap_or_else(|err| exit!("Failed to read password: {:?}", err)),
+    let parsms = {
+        if app.is_present("decrypt") {
+            None
+        } else {
+            let (log_n, r, p) = app
+                .values_of("scrypt")
+                .map(|val| val.collect::<Vec<&str>>())
+                .map(|val| (number(val[0]), number(val[1]), number(val[2])))
+                .unwrap_or((SCRYPT_LOG_N, SCRYPT_R, SCRYPT_P));
+            Some(
+                Params::new(log_n, r, p)
+                    .unwrap_or_else(|_| exit!("Invalid scrypt params '{} {} {}'", log_n, r, p)),
+            )
+        }
     };
 
-    if app.is_present("decrypt") {
-        return (password(), None);
-    }
+    let password = match app.value_of("password") {
+        Some(s) => s.to_string(),
+        None => rpassword::read_password_from_tty(Some("Password: ")).unwrap_exit(),
+    };
 
-    let (log_n, r, p) = app
-        .values_of("scrypt")
-        .map(|val| val.collect::<Vec<&str>>())
-        .map(|val| {
-            (
-                val[0]
-                    .parse::<u8>()
-                    .unwrap_or_else(|_| exit!("Cannot parse '{}' to u8", val[0])),
-                val[1]
-                    .parse::<u32>()
-                    .unwrap_or_else(|_| exit!("Cannot parse '{}' to u32", val[1])),
-                val[2]
-                    .parse::<u32>()
-                    .unwrap_or_else(|_| exit!("Cannot parse '{}' to u32", val[2])),
-            )
+    let input = app
+        .value_of("INPUT")
+        .and_then(|s| if s == "-" { None } else { Some(s) })
+        .map(|s| Box::new(File::open(s).unwrap_exit()) as Box<dyn Read>)
+        .unwrap_or_else(|| Box::new(stdin()));
+
+    let output = app
+        .value_of("OUTPUT")
+        .and_then(|s| if s == "-" { None } else { Some(s) })
+        .map(|s| {
+            if Path::new(s).exists() {
+                exit!("{} already exists", s);
+            }
+            Box::new(File::create(s).unwrap_exit()) as Box<dyn Write>
         })
-        .unwrap_or((SCRYPT_LOG_N, SCRYPT_R, SCRYPT_P));
+        .unwrap_or_else(|| Box::new(stdout()));
 
-    let params = Params::new(log_n, r, p)
-        .unwrap_or_else(|_| exit!("Invalid scrypt params '{} {} {}'", log_n, r, p));
+    (password, parsms, input, output)
+}
 
-    (password(), Some(params))
+fn number<T: FromStr>(val: &str) -> T {
+    val.parse::<T>()
+        .unwrap_or_else(|_| exit!("Cannot parse '{}' to '{}'", val, std::any::type_name::<T>()))
 }
