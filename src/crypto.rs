@@ -1,4 +1,4 @@
-use crate::{ErrorKind, IoError, IoResult, ToIoResult};
+use crate::{ErrorKind, IDENTIFY, IoResult, ToIoResult};
 use aes_gcm::{
     aead::{Aead, NewAead},
     Aes256Gcm, Key, Nonce,
@@ -6,8 +6,6 @@ use aes_gcm::{
 use rand::Rng;
 pub use scrypt::{scrypt, Params};
 use std::io::{Read, Write};
-
-const IDENTIFY: &[u8; 4] = b"\xffAEF";
 
 pub const SCRYPT_LOG_N: u8 = 15;
 pub const SCRYPT_R: u32 = 8;
@@ -35,12 +33,6 @@ pub fn write_header<W: Write>(w: &mut W, salt: &[u8; 64], params: &Params) -> Io
 }
 
 pub fn read_header<R: Read>(r: &mut R) -> IoResult<([u8; 64], Params)> {
-    let mut identify = [0; 4];
-    r.read_exact(&mut identify)?;
-    if &identify != IDENTIFY {
-        return Err(IoError::new(ErrorKind::Other, "Invalid identify"));
-    }
-
     let mut salt = [0; 64];
     r.read_exact(&mut salt)?;
     let mut log_n_buf = [0; 1];

@@ -7,16 +7,16 @@ use std::io::{stdin, stdout, Read, Write};
 use std::path::Path;
 use std::{fs::File, str::FromStr};
 
-pub fn parse() -> (String, Option<Params>, Box<dyn Read>, Box<dyn Write>) {
+pub fn parse() -> (String, bool, Params, Box<dyn Read>, Box<dyn Write>) {
     let app = App::new(crate_name!())
         .version(crate_version!())
         .arg(Arg::with_name("INPUT").required(true).help("<PATH> | -"))
         .arg(Arg::with_name("OUTPUT").required(true).help("<PATH> | -"))
         .arg(
-            Arg::with_name("decrypt")
-                .short("d")
-                .long("decrypt")
-                .conflicts_with("scrypt"),
+            Arg::with_name("force-encrypt")
+                .short("f")
+                .long("force-encrypt")
+                .help(&format!("Encrypt even if {} format is recognized", crate_name!()))
         )
         .arg(
             Arg::with_name("password")
@@ -34,20 +34,14 @@ pub fn parse() -> (String, Option<Params>, Box<dyn Read>, Box<dyn Write>) {
         )
         .get_matches();
 
-    let parsms = {
-        if app.is_present("decrypt") {
-            None
-        } else {
-            let (log_n, r, p) = app
-                .values_of("scrypt")
-                .map(|val| val.collect::<Vec<&str>>())
-                .map(|val| (number(val[0]), number(val[1]), number(val[2])))
-                .unwrap_or((SCRYPT_LOG_N, SCRYPT_R, SCRYPT_P));
-            Some(
-                Params::new(log_n, r, p)
-                    .unwrap_or_else(|_| exit!("Invalid scrypt params '{} {} {}'", log_n, r, p)),
-            )
-        }
+    let params = {
+        let (log_n, r, p) = app
+            .values_of("scrypt")
+            .map(|val| val.collect::<Vec<&str>>())
+            .map(|val| (number(val[0]), number(val[1]), number(val[2])))
+            .unwrap_or((SCRYPT_LOG_N, SCRYPT_R, SCRYPT_P));
+        Params::new(log_n, r, p)
+            .unwrap_or_else(|_| exit!("Invalid scrypt params '{} {} {}'", log_n, r, p))
     };
 
     let password = match app.value_of("password") {
@@ -72,7 +66,7 @@ pub fn parse() -> (String, Option<Params>, Box<dyn Read>, Box<dyn Write>) {
         })
         .unwrap_or_else(|| Box::new(stdout()));
 
-    (password, parsms, input, output)
+    (password, app.is_present("force-encrypt"), params, input, output)
 }
 
 fn number<T: FromStr>(val: &str) -> T {
