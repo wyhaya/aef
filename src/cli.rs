@@ -10,8 +10,8 @@ use std::{fs::File, str::FromStr};
 pub fn parse() -> (String, bool, Params, Box<dyn Read>, Box<dyn Write>) {
     let app = App::new(crate_name!())
         .version(crate_version!())
-        .arg(Arg::with_name("INPUT").required(true).help("<PATH> | -"))
-        .arg(Arg::with_name("OUTPUT").required(true).help("<PATH> | -"))
+        .arg(Arg::with_name("INPUT").help("<PATH> | - or empty for stdin"))
+        .arg(Arg::with_name("OUTPUT").help("<PATH> | - or empty for stdout"))
         .arg(
             Arg::with_name("force-encrypt")
                 .short("f")
