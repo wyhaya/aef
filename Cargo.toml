@@ -12,6 +12,7 @@ readme = "README.md"
 [profile.release]
 lto = true
 codegen-units = 1
+strip = "symbols"
 
 [profile.dev.package.scrypt]
 opt-level = 3
