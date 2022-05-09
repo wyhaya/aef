@@ -9,7 +9,7 @@ use std::io::{Read, Write};
 
 const IDENTIFY: &[u8; 4] = b"\xffAEF";
 
-pub const SCRYPT_LOG_N: u8 = 15;
+pub const SCRYPT_LOG_N: u8 = 20;
 pub const SCRYPT_R: u32 = 8;
 pub const SCRYPT_P: u32 = 1;
 

@@ -52,7 +52,7 @@ pub fn parse() -> (String, Option<Params>, Box<dyn Read>, Box<dyn Write>) {
 
     let password = match app.value_of("password") {
         Some(s) => s.to_string(),
-        None => rpassword::read_password_from_tty(Some("Password: ")).unwrap_exit(),
+        None => rpassword::prompt_password("Password: ").unwrap_exit(),
     };
 
     let input = app
