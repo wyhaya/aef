@@ -24,34 +24,34 @@ cargo install aef
 Encryption
 
 ```bash
-aef ./your.file ./your.aef
+aef -i ./your.file -o ./your.aef
 ```
 
 Decryption
 
 ```bash
-aef ./yout.aef ./your.file -d
+aef -i ./yout.aef -o ./your.file -d
 ```
 
 By default you will enter your password in the terminal, if you don't want to enter it manually you can use the `-p` option
 
 ```bash
-aef ./your.file ./your.aef -p 123456
+aef -i ./your.file -o ./your.aef -p 123456
 ```
 
 Pipeline operation
 
-> Use `-` instead of the `File Path`, aef will operate from `stdin/stdout`
+> If `input/output` is not specified, aef will `read/write` from `stdin/stdout`.
 
 ```bash
 # Read from `stdin` and output to `stdout`
-cat your.file | aef - - > your.aef
+cat your.file | aef > your.aef
 
 # Read from `file` and output to `stdout`
-aef your.aef - -d | > your.file
+aef -i your.aef -d | > your.file
 
 # Read from stdin and output to file
-cat your.file | aef - ./your.aef 
+cat your.file | aef -o ./your.aef 
 ```
 
 ## Example
@@ -61,13 +61,13 @@ Used in conjunction with the `tar` command
 Encryption
 
 ```bash
-tar -cf - ./dir | aef - ./your.aef
+tar -cf - ./dir | aef -o ./your.aef
 ```
 
 Decryption
 
 ```bash
-aef ./your.aef - -d | tar -xf -
+aef -i ./your.aef -d | tar -xf -
 ```
 
 ---

@@ -1,6 +1,6 @@
 [package]
 name = "aef"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 authors = ["wyhaya <wyhaya@gmail.com>"]
 license = "MIT"
@@ -14,12 +14,12 @@ lto = true
 codegen-units = 1
 strip = "symbols"
 
-[profile.dev.package.scrypt]
-opt-level = 3
-
 [dependencies]
 aes-gcm = "0.9.4"
-clap = { version = "2.34.0", default-features = false }
+clap = { version = "3.2.11", features = ["derive"] }
 rand = "0.8.5"
-rpassword = "6.0.1"
+rpassword = "7.0.0"
 scrypt = "0.10.0"
+
+[profile.dev.package.scrypt]
+opt-level = 3
