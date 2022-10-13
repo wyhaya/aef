@@ -1,13 +1,14 @@
 
 # aef [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/wyhaya/aef/Build?style=flat-square)](https://github.com/wyhaya/aef/actions) [![Crates.io](https://img.shields.io/crates/v/aef.svg?style=flat-square)](https://crates.io/crates/aef)
 
-Util for file encryption
+Command line tool for encrypting files
 
 ## Features
 
-* Encryption with `AES-256-GCM`
+* Use `AES-256-GCM` for complete data encryption
 * Use `scrypt` to prevent brute force cracking
-* Support for `pipeline` operations
+* Use `brotli` compression file
+* Support the encryption `directory` and `file`
 
 ## Install
 
@@ -19,55 +20,42 @@ Or use `cargo` to install
 cargo install aef
 ```
 
-## Use
+## Usage
 
-Encryption
-
-```bash
-aef -i ./your.file -o ./your.aef
-```
-
-Decryption
+#### Encryption
 
 ```bash
-aef -i ./yout.aef -o ./your.file -d
+aef -i ./files/ -o ./dist.aef
 ```
 
+#### Decryption
+
+```bash
+aef -i ./dist.aef -o ./files/ -d
+```
+
+#### Password
 By default you will enter your password in the terminal, if you don't want to enter it manually you can use the `-p` option
 
 ```bash
-aef -i ./your.file -o ./your.aef -p 123456
+aef -i ./files/ -o ./dist.aef -p 123456
 ```
 
-Pipeline operation
+#### Compress
 
-> If `input/output` is not specified, aef will `read/write` from `stdin/stdout`.
+`aef` support the use of `brotli` to compress files, you can use the `-c` option to specify the compression level
+
+* Fastest: `-c 0` 
+* Best: `-c 11`
 
 ```bash
-# Read from `stdin` and output to `stdout`
-cat your.file | aef > your.aef
-
-# Read from `file` and output to `stdout`
-aef -i your.aef -d | > your.file
-
-# Read from stdin and output to file
-cat your.file | aef -o ./your.aef 
+aef -i ./files -o ./dist.aef -c 0
 ```
 
-## Example
+#### Pipe
 
-Used in conjunction with the `tar` command
+If `input/output` is not specified, aef will `read/write` from `stdin/stdout`.
 
-Encryption
+## Format
 
-```bash
-tar -cf - ./dir | aef -o ./your.aef
-```
-
-Decryption
-
-```bash
-aef -i ./your.aef -d | tar -xf -
-```
-
----
+* todo

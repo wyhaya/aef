@@ -1,63 +1,24 @@
-use crate::{ErrorKind, IoError, IoResult, ToIoResult};
-use aes_gcm::{
-    aead::{Aead, NewAead},
-    Aes256Gcm, Key, Nonce,
-};
+use crate::aef::Error;
+use aes_gcm::aead::{Aead, KeyInit};
+use aes_gcm::{Aes256Gcm, Key, Nonce};
 use rand::Rng;
-pub use scrypt::{scrypt, Params};
-use std::io::{Read, Write};
-
-const IDENTIFY: &[u8; 4] = b"\xffAEF";
+use scrypt::{scrypt, Params};
+use std::io::{ErrorKind, Read, Write};
 
 pub const SCRYPT_LOG_N: u8 = 20;
 pub const SCRYPT_R: u32 = 8;
 pub const SCRYPT_P: u32 = 1;
 
-pub fn rand_salt() -> [u8; 64] {
-    let mut buf = [0; 64];
-    rand::thread_rng().fill(&mut buf);
-    buf
-}
-
-pub fn rand_nonce() -> [u8; 12] {
+fn rand_nonce() -> [u8; 12] {
     let mut buf = [0; 12];
     rand::thread_rng().fill(&mut buf);
     buf
 }
 
-pub fn write_header<W: Write>(w: &mut W, salt: &[u8; 64], params: &Params) -> IoResult<()> {
-    w.write_all(&IDENTIFY[..])?;
-    w.write_all(salt)?;
-    w.write_all(&params.log_n().to_be_bytes())?;
-    w.write_all(&params.r().to_be_bytes())?;
-    w.write_all(&params.p().to_be_bytes())?;
-    Ok(())
-}
-
-pub fn read_header<R: Read>(r: &mut R) -> IoResult<([u8; 64], Params)> {
-    let mut identify = [0; 4];
-    r.read_exact(&mut identify)?;
-    if &identify != IDENTIFY {
-        return Err(IoError::new(ErrorKind::Other, "Invalid identify"));
-    }
-
-    let mut salt = [0; 64];
-    r.read_exact(&mut salt)?;
-    let mut log_n_buf = [0; 1];
-    r.read_exact(&mut log_n_buf)?;
-    let mut r_buf = [0; 4];
-    r.read_exact(&mut r_buf)?;
-    let mut p_buf = [0; 4];
-    r.read_exact(&mut p_buf)?;
-
-    let params = Params::new(
-        log_n_buf[0],
-        u32::from_be_bytes(r_buf),
-        u32::from_be_bytes(p_buf),
-    )
-    .io_rst(ErrorKind::Other, "Error scrypt params")?;
-
-    Ok((salt, params))
+pub fn rand_salt() -> [u8; 64] {
+    let mut buf = [0; 64];
+    rand::thread_rng().fill(&mut buf);
+    buf
 }
 
 pub struct Cipher {
@@ -67,56 +28,67 @@ pub struct Cipher {
 impl Cipher {
     pub fn new(password: &str, salt: &[u8; 64], params: &Params) -> Self {
         let mut key = [0; 32];
-        scrypt(password.as_bytes(), salt, params, &mut key).unwrap();
+        scrypt(password.as_bytes(), salt, params, &mut key).expect("scrypt");
         Self {
-            aes: Aes256Gcm::new(Key::from_slice(&key)),
+            aes: Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&key)),
         }
     }
 
-    pub fn write_chunk<W: Write>(&self, data: &[u8], w: &mut W) -> IoResult<()> {
+    pub fn write_chunk<W: Write>(&self, w: &mut W, data: &[u8]) -> Result<(), Error> {
         assert!(data.len() as u16 + 16 <= u16::max_value());
 
         if data.is_empty() {
-            w.write_all(&0_u16.to_be_bytes())?;
-            return Ok(());
+            w.write_all(&0_u16.to_be_bytes()).map_err(Error::Io)?;
+            return w.flush().map_err(Error::Io);
         }
 
         let nonce = rand_nonce();
-        let encrypted = self.aes.encrypt(Nonce::from_slice(&nonce), data).io_rst(
-            ErrorKind::InvalidData,
-            "AES-256-GCM encryption/decryption failed",
-        )?;
+        let encrypted = self
+            .aes
+            .encrypt(Nonce::from_slice(&nonce), data)
+            .map_err(|_| Error::Aes)?;
+
         // Chunk length
         let len = encrypted.len() as u16;
-        w.write_all(&len.to_be_bytes())?;
-        // Nonce
-        w.write_all(&nonce)?;
-        // Encrypted data
-        w.write_all(&encrypted)?;
+        w.write_all(&len.to_be_bytes()).map_err(Error::Io)?;
 
-        Ok(())
+        // Nonce
+        w.write_all(&nonce).map_err(Error::Io)?;
+
+        // Encrypted data
+        w.write_all(&encrypted).map_err(Error::Io)?;
+
+        w.flush().map_err(Error::Io)
     }
 
-    pub fn read_chunk<R: Read>(&self, r: &mut R) -> IoResult<Vec<u8>> {
+    pub fn read_chunk<R: Read>(&self, r: &mut R) -> Option<Result<Vec<u8>, Error>> {
+        // TODO: Remain 1 byte
         let mut len = [0; 2];
-        r.read_exact(&mut len)?;
+        if let Err(err) = r.read_exact(&mut len) {
+            if err.kind() == ErrorKind::UnexpectedEof {
+                return None;
+            }
+            return Some(Err(Error::Io(err)));
+        }
         let len = u16::from_be_bytes(len);
         if len == 0 {
-            return Ok(Vec::new());
+            return Some(Ok(Vec::new()));
         }
 
         let mut nonce = [0; 12];
-        r.read_exact(&mut nonce)?;
-        let mut encrypted = vec![0; len as usize];
-        r.read_exact(&mut encrypted)?;
+        if let Err(err) = r.read_exact(&mut nonce) {
+            return Some(Err(Error::Io(err)));
+        }
 
-        let data = self
+        let mut encrypted = vec![0; len as usize];
+        if let Err(err) = r.read_exact(&mut encrypted) {
+            return Some(Err(Error::Io(err)));
+        }
+
+        let rst = self
             .aes
             .decrypt(Nonce::from_slice(&nonce), &encrypted[..])
-            .io_rst(
-                ErrorKind::InvalidData,
-                "AES-256-GCM encryption/decryption failed",
-            )?;
-        Ok(data)
+            .map_err(|_| Error::Aes);
+        Some(rst)
     }
 }
