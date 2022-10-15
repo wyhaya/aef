@@ -10,7 +10,6 @@ Command line tool for encrypting files
 * Use `brotli` compression file <sup>Optional<sup>
 * Support the encryption `directory` and `file`
 * Cross-platform usage `Linux` `macOS` `Windows`
-* Cross-platform relative path
 
 ## ⚠️ Warning
 
