@@ -1,4 +1,4 @@
-use crate::aef::BUF_SIZE;
+use super::BUF_SIZE;
 use brotli::enc::reader::CompressorReader;
 use brotli::DecompressorWriter;
 use std::io::{BufReader, BufWriter, Read, Result, Write};
@@ -13,6 +13,8 @@ impl<R: Read> EncodingReader<R> {
         let reader = BufReader::with_capacity(BUF_SIZE, r);
         match compress {
             None => Self::None(reader),
+            // TODO
+            // lgwin size
             Some(q) => Self::Brotli(CompressorReader::new(reader, BUF_SIZE, *q, 22)),
         }
     }

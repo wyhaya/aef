@@ -7,8 +7,15 @@ Command line tool for encrypting files
 
 * Use `AES-256-GCM` for complete data encryption
 * Use `scrypt` to prevent brute force cracking
-* Use `brotli` compression file
+* Use `brotli` compression file <sup>Optional<sup>
 * Support the encryption `directory` and `file`
+* Cross-platform usage `Linux` `macOS` `Windows`
+* Cross-platform relative path
+
+## ⚠️ Warning
+
+* `aef` has not undergone any security check
+* Disruptive changes may occur prior to `1.0`
 
 ## Install
 
@@ -54,8 +61,4 @@ aef -i ./files -o ./dist.aef -c 0
 
 #### Pipe
 
-If `input/output` is not specified, aef will `read/write` from `stdin/stdout`.
-
-## Format
-
-* todo
+If `input/output` is not specified, aef will `read/write` from `stdin/stdout`

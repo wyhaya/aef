@@ -1,4 +1,4 @@
-use crate::crypto::{SCRYPT_LOG_N, SCRYPT_P, SCRYPT_R};
+use crate::aef::crypto::{SCRYPT_LOG_N, SCRYPT_P, SCRYPT_R};
 use crate::exit;
 use crate::utils::{create_dir, create_file, open_file, ThrowOptionError, ThrowResultError};
 use clap::Parser;
