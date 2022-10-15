@@ -2,6 +2,7 @@ use crate::aef::crypto::{SCRYPT_LOG_N, SCRYPT_P, SCRYPT_R};
 use crate::exit;
 use crate::utils::{create_dir, create_file, open_file, ThrowOptionError, ThrowResultError};
 use clap::Parser;
+use dialoguer::Password;
 use scrypt::Params;
 use std::io::{stdin, stdout, Read, Write};
 use std::path::{Path, PathBuf};
@@ -62,7 +63,12 @@ pub fn parse() -> RunType {
     let args = Args::parse();
 
     let password = args.password.unwrap_or_else(|| {
-        rpassword::prompt_password("Password: ").unwrap_exit(|| "Read password")
+        let mut read = Password::new();
+        read.with_prompt("Password");
+        if !args.decrypt {
+            read.with_confirmation("Confirm password", "Passwords mismatching, please re-enter");
+        }
+        read.interact().unwrap_exit(|| "Read password")
     });
 
     match args.decrypt {
