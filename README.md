@@ -52,12 +52,16 @@ aef -i ./files/ -o ./dist.aef -p 123456
 
 `aef` support the use of `brotli` to compress files, you can use the `-c` option to specify the compression level
 
+```bash
+# Compress at the fastest speed
+aef -i ./files -o ./dist.aef -c
+
+# Adjust the compress quality
+aef -i ./files -o ./dist.aef -c 8
+```
+
 * Fastest: `-c 0` 
 * Best: `-c 11`
-
-```bash
-aef -i ./files -o ./dist.aef -c 0
-```
 
 #### Help
 

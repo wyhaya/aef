@@ -1,3 +1,4 @@
+use crate::aef::compress::{DEFAULT_COMPRESS_LEVEL, MAX_COMPRESS_LEVEL, MIN_COMPRESS_LEVEL};
 use crate::aef::crypto::{SCRYPT_LOG_N, SCRYPT_P, SCRYPT_R};
 use crate::exit;
 use crate::utils::{create_dir, create_file, open_file, ThrowOptionError, ThrowResultError};
@@ -27,8 +28,8 @@ struct Args {
     decrypt: bool,
 
     /// Set compression level [0 - 11]
-    #[clap(short, long)]
-    compress: Option<u32>,
+    #[clap(short, long, value_name = "LEVEL")]
+    compress: Option<Option<u32>>,
 
     /// Set scrypt params
     #[clap(long, default_value_t = SCRYPT_LOG_N)]
@@ -97,7 +98,10 @@ pub fn parse() -> RunType {
                 })
                 .unwrap_or_else(|| (Box::new(stdout()), None));
 
-            let compress = args.compress.map(|n| 11.min(n).max(0));
+            let compress = args.compress.map(|n| {
+                let level = n.unwrap_or(DEFAULT_COMPRESS_LEVEL);
+                MAX_COMPRESS_LEVEL.min(level).max(MIN_COMPRESS_LEVEL)
+            });
 
             RunType::Encrypt {
                 params,

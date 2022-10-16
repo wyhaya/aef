@@ -3,6 +3,10 @@ use brotli::enc::reader::CompressorReader;
 use brotli::DecompressorWriter;
 use std::io::{BufReader, BufWriter, Read, Result, Write};
 
+pub const MIN_COMPRESS_LEVEL: u32 = 0;
+pub const MAX_COMPRESS_LEVEL: u32 = 11;
+pub const DEFAULT_COMPRESS_LEVEL: u32 = MIN_COMPRESS_LEVEL;
+
 pub enum EncodingReader<R: Read> {
     None(BufReader<R>),
     Brotli(CompressorReader<BufReader<R>>),
