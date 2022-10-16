@@ -77,7 +77,7 @@ Options:
   -o, --output <OUTPUT>              File | Stdout
   -p, --password <PASSWORD>          Set password
   -d, --decrypt                      Decrypt file
-  -c, --compress <COMPRESS>          Set compression level [0 - 11]
+  -c, --compress [<LEVEL>]           Set compression level [0 - 11]
       --scrypt-log-n <SCRYPT_LOG_N>  Set scrypt params [default: 20]
       --scrypt-r <SCRYPT_R>          Set scrypt params [default: 8]
       --scrypt-p <SCRYPT_P>          Set scrypt params [default: 1]
