@@ -7,9 +7,9 @@ use unic_normal::StrNormalForm;
 use unic_ucd::GeneralCategory;
 
 #[cfg(windows)]
-const PLATFORM_PATH_SEP: &str = "\\";
+pub const PLATFORM_PATH_SEP: &str = "\\";
 #[cfg(not(windows))]
-const PLATFORM_PATH_SEP: &str = "/";
+pub const PLATFORM_PATH_SEP: &str = "/";
 
 const PATH_SEP: &str = "\x1f";
 
