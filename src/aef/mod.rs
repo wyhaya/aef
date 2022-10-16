@@ -10,17 +10,36 @@ use entry::{FileEntry, FileType};
 use header::FileHeader;
 use path::{RelativePath, RelativePathError};
 use scrypt::Params;
+use std::fmt::Debug;
 use std::io::{BufReader, BufWriter, Error as IoError, Read, Write};
 use std::path::Path;
 
 pub const BUF_SIZE: usize = 8 * 1024;
 
-#[derive(Debug)]
 pub enum Error {
     Io(IoError),
     Aes,
-    Filetype,
+    Entry,
     Path(RelativePathError),
+}
+
+impl Debug for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Io(err) => {
+                writeln!(f, "IO error {:?}", err)
+            }
+            Self::Aes => {
+                writeln!(f, "Encryption or decryption error")
+            }
+            Self::Entry => {
+                writeln!(f, "Incomplete data")
+            }
+            Self::Path(path) => {
+                writeln!(f, "Path error {:?}", path)
+            }
+        }
+    }
 }
 
 pub struct Encoder<W: Write> {
@@ -55,17 +74,22 @@ impl<W: Write> Encoder<W> {
         })
     }
 
-    pub fn append_directory(&mut self, path: &Path) -> Result<(), Error> {
+    pub fn append_directory(&mut self, path: &Path, permissions: Option<u32>) -> Result<(), Error> {
         let path = RelativePath::new(path).map_err(Error::Path)?;
-        let entry = FileEntry::new(FileType::Directory, path);
+        let entry = FileEntry::new(FileType::Directory, path, permissions);
         self.cipher
             .write_chunk(&mut self.output, &entry.into_vec())?;
         Ok(())
     }
 
-    pub fn append_file<R: Read>(&mut self, path: &Path, input: &mut R) -> Result<(), Error> {
+    pub fn append_file<R: Read>(
+        &mut self,
+        path: &Path,
+        permissions: Option<u32>,
+        input: &mut R,
+    ) -> Result<(), Error> {
         let path = RelativePath::new(path).map_err(Error::Path)?;
-        let entry = FileEntry::new(FileType::File, path);
+        let entry = FileEntry::new(FileType::File, path, permissions);
         self.cipher
             .write_chunk(&mut self.output, &entry.into_vec())?;
 

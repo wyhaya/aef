@@ -13,7 +13,7 @@ macro_rules! exit {
     };
 }
 
-pub fn current_dir() -> PathBuf {
+pub fn cur_dir() -> PathBuf {
     std::env::current_dir().unwrap_exit(|| "Get working directory failed")
 }
 
@@ -32,6 +32,30 @@ pub fn create_file<P: AsRef<Path>>(p: P) -> File {
 
 pub fn open_file<P: AsRef<Path>>(p: P) -> File {
     File::open(&p).unwrap_exit(|| format!("Open fail failed '{}'", p.as_ref().display()))
+}
+
+#[cfg(windows)]
+pub fn get_permissions<P: AsRef<Path>>(_: P) -> Option<u32> {
+    None
+}
+
+#[cfg(not(windows))]
+pub fn get_permissions<P: AsRef<Path>>(p: P) -> Option<u32> {
+    use std::os::unix::fs::PermissionsExt;
+    p.as_ref()
+        .metadata()
+        .map(|meta| meta.permissions().mode())
+        .ok()
+}
+
+#[cfg(windows)]
+pub fn set_permissions<P: AsRef<Path>>(_: P, _: u32) {}
+
+#[cfg(not(windows))]
+pub fn set_permissions<P: AsRef<Path>>(p: P, permission: u32) {
+    use std::os::unix::fs::PermissionsExt;
+    let perm = std::fs::Permissions::from_mode(permission);
+    let _ = fs::set_permissions(p, perm);
 }
 
 pub trait ThrowOptionError<D: Display, F: FnOnce() -> D, T> {

@@ -1,14 +1,21 @@
 mod aef;
 mod cli;
 mod utils;
-use aef::entry::FileEntry;
+use aef::entry::{FileEntry, FileType};
 use aef::{Decoder, Encoder};
+mod record;
 use cli::RunType;
+use record::Record;
 use std::path::Path;
-use utils::{create_dir, create_file, current_dir, open_file, ThrowOptionError, ThrowResultError};
+use utils::{
+    create_dir, create_file, cur_dir, get_permissions, open_file, set_permissions,
+    ThrowOptionError, ThrowResultError,
+};
 use walkdir::WalkDir;
 
 fn main() {
+    let mut record = Record::new();
+
     match cli::parse() {
         RunType::Encrypt {
             params,
@@ -18,7 +25,7 @@ fn main() {
             password,
             compress,
         } => {
-            let cur = current_dir();
+            let cur = cur_dir();
             let input = Path::new(&input);
             let (prefix, skip) = match input.is_dir() {
                 true => (input, 1),
@@ -31,17 +38,17 @@ fn main() {
             };
             let absolute = output_path.map(|p| cur.join(p));
 
-            let mut aef =
-                Encoder::new(output, &password, params, compress).unwrap_exit(|| "aef encoder");
+            let mut aef = Encoder::new(output, &password, params, compress).unwrap_exit(|| "");
 
-            for rst in WalkDir::new(input).into_iter().skip(skip) {
-                let entry = rst.unwrap_exit(|| "Entry error");
-
+            for entry in WalkDir::new(input)
+                .into_iter()
+                .skip(skip)
+                .map(|rst| rst.unwrap_exit(|| "Read directory error"))
+            {
                 // Eliminate the output file
                 if let Some(absolute) = &absolute {
                     let entry = cur.join(entry.path());
                     if absolute == &entry {
-                        dbg!("skip");
                         continue;
                     }
                 }
@@ -51,13 +58,17 @@ fn main() {
                     .strip_prefix(&prefix)
                     .unwrap_exit(|| format!("Strip prefix failed {}", entry.path().display()));
 
-                if entry.file_type().is_dir() {
-                    aef.append_directory(suffix)
-                        .unwrap_exit(|| format!("Append directory '{}'", suffix.display()));
+                let permissions = get_permissions(entry.path());
+
+                if entry.path().is_dir() {
+                    record.add(FileType::Directory, suffix);
+                    aef.append_directory(suffix, permissions)
+                        .unwrap_exit(|| format!("Add directory '{}'", suffix.display()));
                 } else {
+                    record.add(FileType::File, suffix);
                     let mut file = open_file(entry.path());
-                    aef.append_file(suffix, &mut file)
-                        .unwrap_exit(|| format!("Append file '{}'", suffix.display()));
+                    aef.append_file(suffix, permissions, &mut file)
+                        .unwrap_exit(|| format!("Add file '{}'", suffix.display()));
                 }
             }
         }
@@ -66,20 +77,29 @@ fn main() {
             output,
             password,
         } => {
-            let mut aef = Decoder::new(input, &password).unwrap_exit(|| "aef decoder");
+            let mut aef = Decoder::new(input, &password).unwrap_exit(|| "");
 
             loop {
-                let FileEntry { filetype, path } = match aef.read_entry() {
-                    Some(rst) => rst.unwrap_exit(|| "Read file entry"),
+                let FileEntry {
+                    filetype,
+                    path,
+                    permissions,
+                } = match aef.read_entry() {
+                    Some(rst) => rst.unwrap_exit(|| "Read data failed"),
                     None => break,
                 };
                 let dist = output.join(path.to_path_buf());
                 if filetype.is_file() {
+                    record.write(FileType::File, &path);
                     let mut f = create_file(&dist);
                     aef.read_data_to(&mut f)
-                        .unwrap_exit(|| format!("Read entry data failed '{}'", path));
+                        .unwrap_exit(|| format!("Read data failed '{}'", path));
                 } else {
-                    create_dir(dist);
+                    record.write(FileType::Directory, &path);
+                    create_dir(&dist);
+                }
+                if let Some(mode) = permissions {
+                    set_permissions(dist, mode);
                 }
             }
         }

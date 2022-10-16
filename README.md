@@ -1,19 +1,20 @@
 
 # aef [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/wyhaya/aef/Build?style=flat-square)](https://github.com/wyhaya/aef/actions) [![Crates.io](https://img.shields.io/crates/v/aef.svg?style=flat-square)](https://crates.io/crates/aef)
 
-aef is a command line tool for encrypting and archiving files, it uses `AES-256-GCM` to fully encrypt data and `scrypt` to prevent brute force data cracking, it also allows the use of `brotli` to reduce the size of archived files.
+aef is a encrypted file archiver, it uses `AES-256-GCM` to fully encrypt data and `scrypt` to prevent brute force data cracking, it also allows the use of `brotli` to reduce the size of archived files.
 
 ## Features
 
 * Use `AES-256-GCM` for complete data encryption
 * Use `scrypt` to prevent brute force cracking
 * Use `brotli` compression file <sup>Optional<sup>
+* Support cross-platform `Linux` `macOS` `Windows`
 * Support the encryption `directory` and `file`
-* Cross-platform usage `Linux` `macOS` `Windows`
+* Support file permissions <sup>Unix<sup>
 
 ## ⚠️ Warning
 
-* `aef` has not undergone any security check
+* aef has not undergone any security check
 * Disruptive changes may occur prior to `1.0`
 
 ## Install
@@ -58,6 +59,24 @@ aef -i ./files/ -o ./dist.aef -p 123456
 aef -i ./files -o ./dist.aef -c 0
 ```
 
-#### Pipe
+#### Help
 
-If `input/output` is not specified, aef will `read/write` from `stdin/stdout`
+```bash
+aef --help
+```
+
+```bash
+Usage: aef [OPTIONS]
+
+Options:
+  -i, --input <INPUT>                File | Stdin
+  -o, --output <OUTPUT>              File | Stdout
+  -p, --password <PASSWORD>          Set password
+  -d, --decrypt                      Decrypt file
+  -c, --compress <COMPRESS>          Set compression level [0 - 11]
+      --scrypt-log-n <SCRYPT_LOG_N>  Set scrypt params [default: 20]
+      --scrypt-r <SCRYPT_R>          Set scrypt params [default: 8]
+      --scrypt-p <SCRYPT_P>          Set scrypt params [default: 1]
+  -h, --help                         Print help information
+  -V, --version                      Print version information
+```
