@@ -35,9 +35,14 @@ impl Debug for Error {
             Self::Entry => {
                 writeln!(f, "Incomplete data")
             }
-            Self::Path(path) => {
-                writeln!(f, "Path error {:?}", path)
-            }
+            Self::Path(path) => match path {
+                RelativePathError::Empty => {
+                    writeln!(f, "Empty path")
+                }
+                RelativePathError::Invalid => {
+                    writeln!(f, "Invalid path")
+                }
+            },
         }
     }
 }
@@ -78,7 +83,7 @@ impl<W: Write> Encoder<W> {
         let path = RelativePath::new(path).map_err(Error::Path)?;
         let entry = FileEntry::new(FileType::Directory, path, permissions);
         self.cipher
-            .write_chunk(&mut self.output, &entry.into_vec())?;
+            .write_chunk(&mut self.output, entry.into_vec())?;
         Ok(())
     }
 
@@ -91,7 +96,7 @@ impl<W: Write> Encoder<W> {
         let path = RelativePath::new(path).map_err(Error::Path)?;
         let entry = FileEntry::new(FileType::File, path, permissions);
         self.cipher
-            .write_chunk(&mut self.output, &entry.into_vec())?;
+            .write_chunk(&mut self.output, entry.into_vec())?;
 
         let mut reader = EncodingReader::new(input, &self.compress);
 
@@ -99,10 +104,11 @@ impl<W: Write> Encoder<W> {
         loop {
             let n = reader.read(&mut buf).map_err(Error::Io)?;
             if n == 0 {
-                self.cipher.write_chunk(&mut self.output, &[])?;
+                self.cipher.write_chunk(&mut self.output, Vec::new())?;
                 return Ok(());
             } else {
-                self.cipher.write_chunk(&mut self.output, &buf[..n])?;
+                self.cipher
+                    .write_chunk(&mut self.output, buf[..n].to_vec())?;
             }
         }
     }

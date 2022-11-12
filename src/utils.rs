@@ -27,7 +27,7 @@ pub fn create_file<P: AsRef<Path>>(p: P) -> File {
     if let Some(parent) = p.parent() {
         create_dir(parent);
     }
-    File::create(&p).unwrap_exit(|| format!("Create file failed '{}'", p.display()))
+    File::create(p).unwrap_exit(|| format!("Create file failed '{}'", p.display()))
 }
 
 pub fn open_file<P: AsRef<Path>>(p: P) -> File {

@@ -12,6 +12,7 @@ use utils::{
     ThrowOptionError, ThrowResultError,
 };
 use walkdir::WalkDir;
+use zeroize::Zeroize;
 
 fn main() {
     let mut record = Record::new();
@@ -22,7 +23,7 @@ fn main() {
             input,
             output,
             output_path,
-            password,
+            mut password,
             compress,
         } => {
             let cur = cur_dir();
@@ -39,6 +40,7 @@ fn main() {
             let absolute = output_path.map(|p| cur.join(p));
 
             let mut aef = Encoder::new(output, &password, params, compress).unwrap_exit(|| "");
+            password.zeroize();
 
             for entry in WalkDir::new(input)
                 .into_iter()
@@ -55,7 +57,7 @@ fn main() {
 
                 let suffix = entry
                     .path()
-                    .strip_prefix(&prefix)
+                    .strip_prefix(prefix)
                     .unwrap_exit(|| format!("Strip prefix failed {}", entry.path().display()));
 
                 let permissions = get_permissions(entry.path());
@@ -75,9 +77,10 @@ fn main() {
         RunType::Decrypt {
             input,
             output,
-            password,
+            mut password,
         } => {
             let mut aef = Decoder::new(input, &password).unwrap_exit(|| "");
+            password.zeroize();
 
             loop {
                 let FileEntry {
