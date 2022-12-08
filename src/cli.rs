@@ -5,7 +5,8 @@ use crate::utils::{create_dir, create_file, open_file, ThrowOptionError, ThrowRe
 use clap::Parser;
 use dialoguer::Password;
 use scrypt::Params;
-use std::io::{stdin, stdout, Read, Write};
+use std::fs::File;
+use std::io::{stdin, stdout, Read, Result, Stdin, Stdout, Write};
 use std::path::{Path, PathBuf};
 
 #[derive(Parser, Debug)]
@@ -48,16 +49,56 @@ pub enum RunType {
     Encrypt {
         params: Params,
         input: String,
-        output: Box<dyn Write>,
+        output: Output,
         output_path: Option<PathBuf>,
         password: String,
         compress: Option<u32>,
     },
     Decrypt {
-        input: Box<dyn Read>,
+        input: Input,
         output: PathBuf,
         password: String,
     },
+}
+
+#[derive(Debug)]
+pub enum Output {
+    Stdout(Stdout),
+    File(File),
+}
+
+impl Write for Output {
+    #[inline]
+    fn write(&mut self, buf: &[u8]) -> Result<usize> {
+        match self {
+            Self::Stdout(io) => io.write(buf),
+            Self::File(io) => io.write(buf),
+        }
+    }
+
+    #[inline]
+    fn flush(&mut self) -> Result<()> {
+        match self {
+            Self::Stdout(io) => io.flush(),
+            Self::File(io) => io.flush(),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum Input {
+    Stdin(Stdin),
+    File(File),
+}
+
+impl Read for Input {
+    #[inline]
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+        match self {
+            Self::Stdin(io) => io.read(buf),
+            Self::File(io) => io.read(buf),
+        }
+    }
 }
 
 pub fn parse() -> RunType {
@@ -93,10 +134,9 @@ pub fn parse() -> RunType {
                     if path.exists() {
                         exit!("'{}' already exists", p);
                     }
-                    let f = create_file(&p);
-                    (Box::new(f) as Box<dyn Write>, Some(path))
+                    (Output::File(create_file(&p)), Some(path))
                 })
-                .unwrap_or_else(|| (Box::new(stdout()), None));
+                .unwrap_or_else(|| (Output::Stdout(stdout()), None));
 
             let compress = args.compress.map(|n| {
                 let level = n.unwrap_or(DEFAULT_COMPRESS_LEVEL);
@@ -115,11 +155,8 @@ pub fn parse() -> RunType {
         true => {
             let input = args
                 .input
-                .map(|p| {
-                    let file = open_file(p);
-                    Box::new(file) as Box<dyn Read>
-                })
-                .unwrap_or_else(|| Box::new(stdin()));
+                .map(|p| Input::File(open_file(p)))
+                .unwrap_or_else(|| Input::Stdin(stdin()));
 
             let output = args
                 .output
