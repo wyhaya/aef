@@ -1,5 +1,5 @@
 
-# aef [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/wyhaya/aef/Build?style=flat-square)](https://github.com/wyhaya/aef/actions) [![Crates.io](https://img.shields.io/crates/v/aef.svg?style=flat-square)](https://crates.io/crates/aef)
+# aef [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/wyhaya/aef/ci.yml?style=flat-square&branch=main)](https://github.com/wyhaya/aef/actions) [![Crates.io](https://img.shields.io/crates/v/aef.svg?style=flat-square)](https://crates.io/crates/aef)
 
 aef is a encrypted file archiver, it uses `AES-256-GCM` to fully encrypt data and `scrypt` to prevent brute force data cracking, it also allows the use of `brotli` to reduce the size of archived files.
 
