@@ -1,5 +1,7 @@
 use crate::aef::compress::{DEFAULT_COMPRESS_LEVEL, MAX_COMPRESS_LEVEL, MIN_COMPRESS_LEVEL};
-use crate::aef::crypto::{SCRYPT_LOG_N, SCRYPT_P, SCRYPT_R};
+use crate::aef::crypto::{
+    DEFAULT_SCRYPT_LOG_N, DEFAULT_SCRYPT_P, DEFAULT_SCRYPT_R, SCRYPT_KEY_LEN,
+};
 use crate::exit;
 use crate::utils::{create_dir, create_file, open_file, ThrowOptionError, ThrowResultError};
 use clap::Parser;
@@ -33,15 +35,15 @@ struct Args {
     compress: Option<Option<u32>>,
 
     /// Set scrypt params
-    #[clap(long, default_value_t = SCRYPT_LOG_N)]
+    #[clap(long, default_value_t = DEFAULT_SCRYPT_LOG_N)]
     scrypt_log_n: u8,
 
     /// Set scrypt params
-    #[clap(long, default_value_t = SCRYPT_R)]
+    #[clap(long, default_value_t = DEFAULT_SCRYPT_R)]
     scrypt_r: u32,
 
     /// Set scrypt params
-    #[clap(long, default_value_t = SCRYPT_P)]
+    #[clap(long, default_value_t = DEFAULT_SCRYPT_P)]
     scrypt_p: u32,
 }
 
@@ -115,15 +117,20 @@ pub fn parse() -> RunType {
 
     match args.decrypt {
         false => {
-            let params = Params::new(args.scrypt_log_n, args.scrypt_r, args.scrypt_p)
-                .unwrap_or_else(|_| {
-                    exit!(
-                        "Invalid scrypt params '{} {} {}'",
-                        args.scrypt_log_n,
-                        args.scrypt_r,
-                        args.scrypt_p
-                    )
-                });
+            let params = Params::new(
+                args.scrypt_log_n,
+                args.scrypt_r,
+                args.scrypt_p,
+                SCRYPT_KEY_LEN,
+            )
+            .unwrap_or_else(|_| {
+                exit!(
+                    "Invalid scrypt params '{} {} {}'",
+                    args.scrypt_log_n,
+                    args.scrypt_r,
+                    args.scrypt_p
+                )
+            });
 
             let input = args.input.unwrap_exit(|| "Must specify the '-i' option");
 

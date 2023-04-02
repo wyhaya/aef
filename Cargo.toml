@@ -1,9 +1,9 @@
 [package]
 name = "aef"
-version = "0.4.1"
+version = "0.4.2"
 edition = "2021"
 license = "MIT"
-description = "Encrypted file archiver"
+description = "An encrypted file archiver"
 homepage = "https://github.com/wyhaya/aef"
 repository = "https://github.com/wyhaya/aef.git"
 readme = "README.md"
@@ -15,12 +15,12 @@ strip = "symbols"
 
 [dependencies]
 ring = "0.16.20"
-zeroize = { version = "1.5.7", features = ["zeroize_derive"] }
-clap = { version = "4.0.14", features = ["derive"] }
+zeroize = { version = "1.6.0", features = ["zeroize_derive"] }
+clap = { version = "4.2.1", features = ["derive"] }
 rand = "0.8.5"
-dialoguer = "0.10.2"
-scrypt = "0.10.0"
-walkdir = "2.3.2"
+dialoguer = "0.10.3"
+scrypt = "0.11.0"
+walkdir = "2.3.3"
 brotli = "3.3.4"
 unic-normal = "0.9.0"
 unic-ucd = "0.9.0"

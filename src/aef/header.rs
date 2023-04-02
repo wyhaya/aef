@@ -1,4 +1,4 @@
-use super::crypto::SALT_LEN;
+use super::crypto::{SALT_LEN, SCRYPT_KEY_LEN};
 use scrypt::Params;
 use std::io::{Error as IoError, ErrorKind, Read, Result as IoResult, Write};
 
@@ -56,6 +56,7 @@ impl FileHeader {
             log_n_buf[0],
             u32::from_be_bytes(r_buf),
             u32::from_be_bytes(p_buf),
+            SCRYPT_KEY_LEN,
         )
         .map_err(|_| IoError::new(ErrorKind::Other, "Error scrypt params"))?;
 

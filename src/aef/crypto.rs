@@ -8,9 +8,10 @@ use scrypt::{scrypt, Params};
 use std::io::{ErrorKind, Read, Write};
 use zeroize::ZeroizeOnDrop;
 
-pub const SCRYPT_LOG_N: u8 = 20;
-pub const SCRYPT_R: u32 = 8;
-pub const SCRYPT_P: u32 = 1;
+pub const DEFAULT_SCRYPT_LOG_N: u8 = 20;
+pub const DEFAULT_SCRYPT_R: u32 = 8;
+pub const DEFAULT_SCRYPT_P: u32 = 1;
+pub const SCRYPT_KEY_LEN: usize = 32;
 
 pub const SALT_LEN: usize = 64;
 
@@ -42,12 +43,12 @@ impl NonceSequence for ChunkNonce {
 
 #[derive(ZeroizeOnDrop)]
 pub struct Cipher {
-    key: [u8; 32],
+    key: [u8; SCRYPT_KEY_LEN],
 }
 
 impl Cipher {
     pub fn new(password: &str, salt: &[u8; SALT_LEN], params: &Params) -> Self {
-        let mut key = [0; 32];
+        let mut key = [0; SCRYPT_KEY_LEN];
         scrypt(password.as_bytes(), salt, params, &mut key).expect("scrypt");
         Self { key }
     }
