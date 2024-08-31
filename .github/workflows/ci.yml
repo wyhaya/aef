@@ -70,10 +70,8 @@ jobs:
           key: ${{ matrix.job.target }}-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Cargo fmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+        run: |
+          cargo fmt --all -- --check
 
       - name: Cargo test
         if: matrix.job.cross == false
