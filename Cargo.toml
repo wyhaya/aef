@@ -1,0 +1,24 @@
+[package]
+name = "aef"
+version = "0.8.0"
+edition = "2021"
+license = "MIT"
+description = "An encrypted file archiver"
+homepage = "https://github.com/wyhaya/aef"
+repository = "https://github.com/wyhaya/aef.git"
+readme = "README.md"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = "symbols"
+
+[dependencies]
+argon2 = "0.5.3"
+ring = "0.17.8"
+zeroize = "1.8.1"
+dialoguer = "0.11.0"
+clap = { version = "4.5.23", features = ["derive"] }
+
+[profile.dev.package.argon2]
+opt-level = 3
