@@ -11,32 +11,25 @@ jobs:
         job:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-24.04
-            cross: false
             publish: true
 
           - target: x86_64-unknown-linux-musl
             os: ubuntu-24.04
-            cross: true
 
           - target: aarch64-unknown-linux-gnu
-            os: ubuntu-24.04
-            cross: true
+            os: ubuntu-24.04-arm
 
           - target: aarch64-unknown-linux-musl
-            os: ubuntu-24.04
-            cross: true
+            os: ubuntu-24.04-arm
 
           - target: x86_64-apple-darwin
             os: macos-latest
-            cross: false
 
           - target: aarch64-apple-darwin
             os: macos-latest
-            cross: false
 
           - target: x86_64-pc-windows-msvc
             os: windows-latest
-            cross: false
 
     env:
       NAME: aef
@@ -49,10 +42,11 @@ jobs:
           rustup update
           rustup target add ${{ matrix.job.target }}
 
-      - name: Install cross
-        if: matrix.job.cross
+      - name: Install musl-tools
+        if: contains(matrix.job.target, 'musl')
         run: |
-          cargo install cross
+          sudo apt-get update -y
+          sudo apt-get install musl-tools -y
 
       - name: Cargo cache
         uses: actions/cache@v4
@@ -70,19 +64,12 @@ jobs:
           cargo fmt --all -- --check
 
       - name: Cargo test
-        if: matrix.job.cross == false
         run: |
-          cargo test
+          cargo test --release --target ${{ matrix.job.target }}
 
       - name: Cargo Build
-        if: matrix.job.cross == false
         run: |
           cargo build --release --target ${{ matrix.job.target }}
-
-      - name: Cross Build
-        if: matrix.job.cross
-        run: |
-          cross build --release --target ${{ matrix.job.target }}
 
       # -------------- GitHub Relese --------------
 
