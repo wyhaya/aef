@@ -4,16 +4,23 @@ mod utils;
 
 use aef::{rand_salt, Cipher, Error, FileHeader};
 use cli::{Input, Output, Password};
+use std::fs;
 use std::io::{Read, Write};
+use utils::ThrowError;
 
 fn main() {
-    let (input, output, password, de) = cli::parse();
+    let (input, output, password, de, delete_input) = cli::parse();
     if de {
         decrypt(input, output, password)
     } else {
         encrypt(input, output, password)
     }
     .unwrap_or_else(|err| exit!("{:?}", err));
+
+    if let Some(p) = delete_input {
+        // TODO: Secure Erase
+        fs::remove_file(p).unwrap_exit(|| "Failed to delete input file");
+    }
 }
 
 fn decrypt(mut input: Input, mut output: Output, mut password: Password) -> Result<(), Error> {

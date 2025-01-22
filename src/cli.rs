@@ -25,6 +25,10 @@ struct Args {
     #[clap(short, long)]
     decrypt: bool,
 
+    /// Delete input file after completion
+    #[clap(long)]
+    delete_input: bool,
+
     /// Argon2: memory size in 1 KiB blocks. Between 8 * `argon2_p` and (2^32)-1
     #[clap(long, name = "M", default_value_t = DEFAULT_ARGON2_M)]
     argon2_m: u32,
@@ -79,8 +83,8 @@ impl Write for Output {
 }
 
 impl Input {
-    fn from_path(path: String) -> Self {
-        File::open(&path)
+    fn from_path(path: &str) -> Self {
+        File::open(path)
             .map(Input::File)
             .unwrap_exit(|| format!("Failed to open file '{}'", path))
     }
@@ -123,7 +127,7 @@ impl Drop for Password {
     }
 }
 
-pub fn parse() -> (Input, Output, Password, bool) {
+pub fn parse() -> (Input, Output, Password, bool, Option<String>) {
     let args = Args::parse();
 
     let params = argon2_params(args.argon2_m, args.argon2_t, args.argon2_p);
@@ -137,15 +141,20 @@ pub fn parse() -> (Input, Output, Password, bool) {
     });
     let password = Password { password, params };
 
-    let input = args
+    let (input, delete_input) = args
         .input
-        .map(Input::from_path)
-        .unwrap_or_else(|| Input::Stdin(stdin()));
+        .map(|p| {
+            (
+                Input::from_path(&p),
+                if args.delete_input { Some(p) } else { None },
+            )
+        })
+        .unwrap_or_else(|| (Input::Stdin(stdin()), None));
 
     let output = args
         .output
         .map(Output::from_path)
         .unwrap_or_else(|| Output::Stdout(stdout()));
 
-    (input, output, password, args.decrypt)
+    (input, output, password, args.decrypt, delete_input)
 }
