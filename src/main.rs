@@ -2,7 +2,7 @@ mod aef;
 mod cli;
 mod utils;
 
-use aef::{rand_salt, Cipher, Error, FileHeader};
+use aef::{Cipher, Error, FileHeader, rand_salt};
 use cli::{Input, Output, Password};
 use std::fs;
 use std::io::{Read, Write};

@@ -2,7 +2,7 @@ use crate::cli::Password;
 use crate::utils::ThrowError;
 use argon2::{Algorithm, Argon2, Params, Version};
 use ring::aead::{
-    Aad, BoundKey, Nonce, NonceSequence, OpeningKey, SealingKey, UnboundKey, AES_256_GCM, NONCE_LEN,
+    AES_256_GCM, Aad, BoundKey, NONCE_LEN, Nonce, NonceSequence, OpeningKey, SealingKey, UnboundKey,
 };
 use ring::rand::{SecureRandom, SystemRandom};
 use std::fmt::Debug;

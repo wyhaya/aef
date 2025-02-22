@@ -1,9 +1,9 @@
-use crate::aef::{argon2_params, DEFAULT_ARGON2_M, DEFAULT_ARGON2_P, DEFAULT_ARGON2_T};
+use crate::aef::{DEFAULT_ARGON2_M, DEFAULT_ARGON2_P, DEFAULT_ARGON2_T, argon2_params};
 use crate::utils::ThrowError;
 use argon2::Params;
 use clap::Parser;
 use std::fs::File;
-use std::io::{stdin, stdout, Read, Result, Stdin, Stdout, Write};
+use std::io::{Read, Result, Stdin, Stdout, Write, stdin, stdout};
 use zeroize::Zeroize;
 
 #[derive(Parser, Debug)]
