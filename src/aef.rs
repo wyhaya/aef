@@ -18,7 +18,7 @@ const SALT_LEN: usize = 16;
 const ARGON2_ALGORITHM: Algorithm = Algorithm::Argon2id;
 const ARGON2_VERSION: Version = Version::V0x13;
 pub const DEFAULT_ARGON2_M: u32 = 256 * 1024;
-pub const DEFAULT_ARGON2_T: u32 = 32;
+pub const DEFAULT_ARGON2_T: u32 = 64;
 pub const DEFAULT_ARGON2_P: u32 = 4;
 
 pub enum Error {

@@ -1,6 +1,6 @@
 [package]
 name = "aef"
-version = "0.8.1"
+version = "0.8.2"
 edition = "2024"
 license = "MIT"
 description = "An encrypted file archiver"
@@ -15,10 +15,10 @@ strip = "symbols"
 
 [dependencies]
 argon2 = "0.5.3"
-ring = "0.17.10"
+ring = "0.17.14"
 zeroize = "1.8.1"
 dialoguer = "0.11.0"
-clap = { version = "4.5.30", features = ["derive"] }
+clap = { version = "4.5.40", features = ["derive"] }
 
 [profile.dev.package.argon2]
 opt-level = 3
