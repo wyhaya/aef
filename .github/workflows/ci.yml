@@ -44,6 +44,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.job.target }}
+          components: rustfmt
 
       - name: Install musl-tools
         if: contains(matrix.job.target, 'musl')
