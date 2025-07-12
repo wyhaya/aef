@@ -30,7 +30,7 @@ pub enum Error {
 impl Debug for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Io(err) => writeln!(f, "IO error {:?}", err),
+            Self::Io(err) => writeln!(f, "IO error {err:?}"),
             Self::Encryption => writeln!(f, "Encryption error"),
             Self::Decryption => writeln!(f, "Decryption error"),
         }
@@ -62,13 +62,13 @@ impl FileHeader {
         let mut identify = [0; 4];
         r.read_exact(&mut identify)?;
         if &identify != AEF_IDENTIFY {
-            return Err(IoError::new(ErrorKind::Other, "Invalid aef identify"));
+            return Err(IoError::other("Invalid aef identify"));
         }
 
         let mut version = [0; 4];
         r.read_exact(&mut version)?;
         if u32::from_be_bytes(version) != AEF_VERSION {
-            return Err(IoError::new(ErrorKind::Other, "Invalid aef version"));
+            return Err(IoError::other("Invalid aef version"));
         }
 
         let mut salt = [0; SALT_LEN];

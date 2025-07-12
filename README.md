@@ -30,10 +30,15 @@ aef -i ./your.file.aef -o ./your.file -d
 
 #### Password
 
-By default you will enter your password in the terminal, if you don't want to enter it manually you can use the `-p` option.
+By default you will enter your password in the terminal, if you don't want to enter it manually you can use the `-p` option or set the `AEF_PASSWORD` environment variable.
 
 ```bash
+# Using -p option
 aef -i ./file -o ./dist.aef -p 123456
+
+# Using environment variable
+export AEF_PASSWORD=123456
+aef -i ./file -o ./dist.aef
 ```
 
 ### Pipeline
@@ -42,10 +47,10 @@ aef support transmission through `Pipeline`, you can use it in combination with 
 
 ```bash
 # Encrypt
-tar -czf - your.file | aef -o ./your-file.tgz.aef -p 123456
+tar -czf - your.file | aef -o ./your-file.tgz.aef
 
 # Decrypt
-aef -i ./your-file.tgz.aef -p 123456 | tar -xzf -
+aef -d -i ./your-file.tgz.aef | tar -xzf -
 ```
 
 #### Help
@@ -60,7 +65,7 @@ Usage: aef [OPTIONS]
 Options:
   -i, --input <INPUT>                File | Stdin
   -o, --output <OUTPUT>              File | Stdout
-  -p, --password <PASSWORD>          Set password
+  -p, --password <PASSWORD>          Set password [env: AEF_PASSWORD=]
   -d, --decrypt                      Decrypt file
   ...
   -h, --help                         Print help

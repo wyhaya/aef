@@ -18,7 +18,7 @@ struct Args {
     output: Option<String>,
 
     /// Set password
-    #[clap(short, long)]
+    #[clap(short, long, env = "AEF_PASSWORD")]
     password: Option<String>,
 
     /// Decrypt file
@@ -86,7 +86,7 @@ impl Input {
     fn from_path(path: &str) -> Self {
         File::open(path)
             .map(Input::File)
-            .unwrap_exit(|| format!("Failed to open file '{}'", path))
+            .unwrap_exit(|| format!("Failed to open file '{path}'"))
     }
 }
 
@@ -107,7 +107,7 @@ impl LazyFile {
         match self {
             Self::Path(path) => {
                 let file = File::create_new(&path)
-                    .unwrap_exit(|| format!("Failed to create file '{}'", path));
+                    .unwrap_exit(|| format!("Failed to create file '{path}'"));
                 *self = Self::File(file);
                 self.get_mut()
             }
