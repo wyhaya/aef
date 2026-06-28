@@ -16,9 +16,9 @@ strip = "symbols"
 [dependencies]
 argon2 = "0.5.3"
 ring = "0.17.14"
-zeroize = "1.8.1"
-dialoguer = "0.11.0"
-clap = { version = "4.5.40", features = ["derive", "env"] }
+zeroize = "1.9.0"
+dialoguer = "0.12.0"
+clap = { version = "4.6.1", features = ["derive", "env"] }
 
 [profile.dev.package.argon2]
 opt-level = 3
