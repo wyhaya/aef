@@ -2,7 +2,7 @@ mod aef;
 mod cli;
 mod utils;
 
-use aef::{Cipher, Error, FileHeader, rand_salt};
+use aef::{Chunk, Cipher, Error, FileHeader, ensure_eof, rand_salt};
 use cli::{Input, Output, Password};
 use std::fs;
 use std::io::{Read, Write};
@@ -26,15 +26,19 @@ fn main() {
 fn decrypt(mut input: Input, mut output: Output, mut password: Password) -> Result<(), Error> {
     let FileHeader { salt, params } = FileHeader::read_from(&mut input).map_err(Error::Io)?;
     password.params = params;
-    let cipher = Cipher::new(&password, salt);
+    let header = FileHeader::new(salt, password.params.clone());
+    let cipher = Cipher::new(&password, &header);
+    let mut index = 0;
     loop {
-        let rst = cipher.read_chunk(&mut input);
-        match rst {
-            Some(Ok(data)) => {
+        match cipher.read_chunk(&mut input, index)? {
+            Chunk::Data(data) => {
                 output.write_all(&data).map_err(Error::Io)?;
+                index = index.checked_add(1).ok_or(Error::Decryption)?;
             }
-            Some(Err(err)) => return Err(err),
-            None => break,
+            Chunk::End => {
+                ensure_eof(&mut input)?;
+                break;
+            }
         }
     }
     Ok(())
@@ -42,16 +46,17 @@ fn decrypt(mut input: Input, mut output: Output, mut password: Password) -> Resu
 
 fn encrypt(mut input: Input, mut output: Output, password: Password) -> Result<(), Error> {
     let salt = rand_salt();
-    let cipher = Cipher::new(&password, salt);
-    FileHeader::new(salt, password.params.clone())
-        .write_to(&mut output)
-        .map_err(Error::Io)?;
+    let header = FileHeader::new(salt, password.params.clone());
+    let cipher = Cipher::new(&password, &header);
+    header.write_to(&mut output).map_err(Error::Io)?;
     let mut buf = [0; 32 * 1024];
+    let mut index = 0;
     loop {
         let n = input.read(&mut buf).map_err(Error::Io)?;
         if n == 0 {
-            return cipher.write_chunk(&mut output, Vec::new());
+            return cipher.write_chunk(&mut output, index, Vec::new());
         }
-        cipher.write_chunk(&mut output, buf[..n].to_vec())?;
+        cipher.write_chunk(&mut output, index, buf[..n].to_vec())?;
+        index = index.checked_add(1).ok_or(Error::Encryption)?;
     }
 }
