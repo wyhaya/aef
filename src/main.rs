@@ -33,7 +33,7 @@ fn decrypt(mut input: Input, mut output: Output, mut password: Password) -> Resu
         match cipher.read_chunk(&mut input, index)? {
             Chunk::Data(data) => {
                 output.write_all(&data).map_err(Error::Io)?;
-                index = index.checked_add(1).ok_or(Error::Decryption)?;
+                index += 1;
             }
             Chunk::End => {
                 ensure_eof(&mut input)?;
@@ -57,6 +57,6 @@ fn encrypt(mut input: Input, mut output: Output, password: Password) -> Result<(
             return cipher.write_chunk(&mut output, index, Vec::new());
         }
         cipher.write_chunk(&mut output, index, buf[..n].to_vec())?;
-        index = index.checked_add(1).ok_or(Error::Encryption)?;
+        index += 1;
     }
 }
